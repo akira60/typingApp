@@ -13,9 +13,7 @@ interface Lang {
   language: string;
   already: boolean;
 }
-const aaa = ref<Lang[]>([
-  {id: 1, language: "aaa", already: true}
-]);
+
 const langs = ref<Lang[]>([]);
 
 const getLang = async () => {
@@ -34,7 +32,7 @@ onMounted(getLang);
 
 const gameStart = () => {
   current_question.value = langs.value[0].language;
-  question_counts.value = langs.value[0].language.length;
+  question_counts.value = langs.value.length;
 
   startFlg.value = true;
   nextTick(function () {
@@ -45,9 +43,10 @@ const gameStart = () => {
   })
 }
 const gaugeStyle = computed((): { width: string; backgroundColor: string } => {
-  const width = ref(33 * current_question_counts.value + '%')
+  const rate: number = 100 / question_counts.value;
+  const width = ref(rate * current_question_counts.value + '%');
   const color = ref('')
-  if (current_question_counts.value == 3) {
+  if (current_question_counts.value == question_counts.value) {
     width.value = 100 + '%'
     color.value = '#03a9f4'
   } else {
@@ -61,10 +60,12 @@ const gaugeStyle = computed((): { width: string; backgroundColor: string } => {
 const styleObject = ref(gaugeStyle)
 watch(typeBox, (e): void => {
   if (e == current_question.value) {
-    langs.value[0].language.slice(0, 1)
-    current_question.value = langs.value[current_question_counts.value].language
-    typeBox.value = ''
-    current_question_counts.value++
+    langs.value[0].language.slice(0, 1);
+    current_question_counts.value++;
+    if(current_question_counts.value != question_counts.value){
+      current_question.value = langs.value[current_question_counts.value].language;
+    }
+    typeBox.value = '';    
   }
 })
 </script>
@@ -77,7 +78,7 @@ watch(typeBox, (e): void => {
     </div>
     <button v-if="startFlg != true" class="startButton mb-20" @click="gameStart">Start</button>
     <div v-if="startFlg">
-      <div class="question mb-20">{{ current_question }}</div>
+      <div v-if="current_question_counts != question_counts" class="question mb-20">{{ current_question }}</div>
       <div v-if="current_question_counts == question_counts" class="clear">Clear!</div>
       <div class="typeFormWrapper mb-20">
         <input id="typeForm" v-model="typeBox" type="text" class="typeForm" />
