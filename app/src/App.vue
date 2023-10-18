@@ -1,24 +1,46 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed, nextTick } from 'vue'
+import { ref, onMounted, watch, computed, nextTick} from 'vue';
+import { supabase } from './supabase';
 
-const startFlg = ref(false)
-const current_question = ref('aaa')
-const typeBox = ref('')
-const current_question_counts = ref(0)
-const question_counts = ref(0)
-const questions = ['apple', 'banana', 'peach']
+const startFlg = ref(false);
+const current_question = ref('');
+const typeBox = ref('');
+const current_question_counts = ref(0);
+const question_counts = ref<number>(0);
 
-onMounted((): void => {
-  console.log(questions[0])
-  current_question.value = questions[0]
-  question_counts.value = questions.length
-})
+interface Lang {
+  id: number;
+  language: string;
+  already: boolean;
+}
+const aaa = ref<Lang[]>([
+  {id: 1, language: "aaa", already: true}
+]);
+const langs = ref<Lang[]>([]);
+
+const getLang = async () => {
+  try {
+    const { data: result, error } = await supabase.from('HTML').select('id, language, already');
+    if (error) {
+      console.error("Error fetching langs:", error);
+      return;
+    }
+    langs.value = result || [];
+  } catch (error) {
+    console.error("An unexpected error occurred:", error);
+  }
+};
+onMounted(getLang);
+
 const gameStart = () => {
-  startFlg.value = true
+  current_question.value = langs.value[0].language;
+  question_counts.value = langs.value[0].language.length;
+
+  startFlg.value = true;
   nextTick(function () {
-    const aa = document.getElementById('typeForm')
-    if (aa != null) {
-      aa.focus()
+    const form = document.getElementById('typeForm');
+    if (form != null) {
+      form.focus();
     }
   })
 }
@@ -39,8 +61,8 @@ const gaugeStyle = computed((): { width: string; backgroundColor: string } => {
 const styleObject = ref(gaugeStyle)
 watch(typeBox, (e): void => {
   if (e == current_question.value) {
-    questions.splice(0, 1)
-    current_question.value = questions[0]
+    langs.value[0].language.slice(0, 1)
+    current_question.value = langs.value[current_question_counts.value].language
     typeBox.value = ''
     current_question_counts.value++
   }
